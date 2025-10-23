@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earning Pro - One-Time Tasks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles & Variables --- */
+        :root {
+            --primary-color: #dc2626; /* Red-600 */
+            --primary-color-hover: #b91c1c; /* Red-700 */
+            --background-color: #f8fafc; /* Slate-50, lighter for more contrast */
+            --text-color-dark: #1e293b; /* Slate-800 */
+            --text-color-light: #64748b; /* Slate-500 */
+            --card-background: #ffffff;
+            --border-color: #e2e8f0; /* Slate-200 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color-dark);
+            overscroll-behavior-y: none;
+        }
+        /* --- Layout & Animations --- */
+        .app-container { width: 100%; min-height: 100vh; display: flex; flex-direction: column; background-color: var(--card-background); }
+        .content-container { padding-bottom: 70px; flex-grow: 1; }
+        .page { display: none; flex-grow: 1; animation: fadeIn 0.4s ease-in-out; }
+        .page.active { display: flex; flex-direction: column; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.5s forwards; opacity: 0; }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* --- Loader --- */
+        .loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px); transition: opacity 0.3s; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- Buttons & Forms --- */
+        .btn-primary { background-color: var(--primary-color); color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; text-align: center; transition: all 0.2s; border: none; cursor: pointer; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .btn-primary:hover { background-color: var(--primary-color-hover); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.7; transform: none; box-shadow: none; }
+        .form-input { width: 100%; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2); }
+        /* --- Navigation --- */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-background); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 0.5rem 0; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-color-light); font-size: 0.75rem; padding: 0.5rem; cursor: pointer; transition: color 0.2s, transform 0.2s; flex: 1; text-align: center; }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 0.25rem; transition: transform 0.2s; }
+        .nav-item.active { color: var(--primary-color); font-weight: 600; }
+        .nav-item:hover i { transform: scale(1.1); }
+        /* --- Modal --- */
+        .custom-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; backdrop-filter: blur(3px); }
+        .custom-modal-overlay.visible { opacity: 1; visibility: visible; }
+        .custom-modal { background-color: white; padding: 1.5rem; border-radius: 0.75rem; width: 90%; max-width: 350px; text-align: center; transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .custom-modal-overlay.visible .custom-modal { transform: scale(1) translateY(0); }
+        .custom-modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .custom-modal-message { margin-bottom: 1.5rem; color: var(--text-color-light); white-space: pre-wrap; }
+        /* --- Task Timer Progress Bar --- */
+        .progress-bar-container { width: 100%; background-color: #e5e7eb; border-radius: 9999px; height: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 100%; background-color: var(--primary-color); border-radius: 9999px; transition: width 1s linear; }
+        /* --- Slider Custom Styles (New) --- */
+        .slider-container { position: relative; overflow: hidden; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .slider-wrapper { display: flex; transition: transform 0.5s ease-in-out; }
+        .slider-item { flex: 0 0 100%; width: 100%; height: 220px; /* Fixed height for consistency */ background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; text-align: center; color: white; position: relative; }
+        .slider-item::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.3); /* Dark overlay */ }
+        .slider-content { position: relative; z-index: 10; padding: 1rem; }
+        .slider-dots { display: flex; justify-content: center; position: absolute; bottom: 10px; left: 0; right: 0; z-index: 20; }
+        .slider-dot { width: 8px; height: 8px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.5); margin: 0 4px; cursor: pointer; transition: background-color 0.3s; }
+        .slider-dot.active { background-color: var(--primary-color); transform: scale(1.2); }
+    </style>
+</head>
+<body>
+
+    <div id="maintenance-overlay" class="fixed inset-0 bg-white z-[99999] flex flex-col items-center justify-center text-center p-6" style="display: none;">
+        <i class="ph-bold ph-warning-octagon text-6xl text-red-500 mb-4"></i>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Under Maintenance</h1>
+        <p class="text-gray-600 max-w-md">The app is currently down for scheduled maintenance. We'll be back online shortly. Thank you for your patience!</p>
+    </div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <div id="customModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <h3 id="modalTitle" class="custom-modal-title">Notice</h3>
+            <p id="modalMessage" class="custom-modal-message">This is a message.</p>
+            <button id="modalCloseBtn" class="btn-primary w-full">OK</button>
+        </div>
+    </div>
+
+    <main class="app-container">
+        <div class="content-container flex-grow">
+
+            <div id="login-page" class="page flex-col justify-center p-6">
+                 <div class="w-full max-w-sm mx-auto bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+                    <div class="text-center mb-10">
+                        <i class="ph-bold ph-bank text-5xl" style="color: var(--primary-color);"></i>
+                        <h1 class="text-3xl font-bold mt-2 text-gray-800">Welcome Back</h1>
+                        <p class="text-gray-500">Sign in to continue</p>
+                    </div>
+                    <form id="login-form" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="font-medium text-gray-600 text-sm">Email</label>
+                            <input type="email" id="login-email" class="form-input mt-1" required placeholder="you@example.com" autocomplete="email">
+                        </div>
+                        <div>
+                             <div class="flex justify-between items-center">
+                                 <label for="login-password" class="font-medium text-gray-600 text-sm">Password</label>
+                                 <a href="#" id="forgot-password-link" class="text-sm font-medium hover:underline" style="color: var(--primary-color);">Forgot Password?</a>
+                             </div>
+                            <input type="password" id="login-password" class="form-input mt-1" required placeholder="••••••••" autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn-primary w-full !mt-6 py-3">Sign In</button>
+                    </form>
+                    <p class="text-center text-sm text-gray-500 mt-6">
+                        Don't have an account? <a href="#" id="go-to-register" class="font-semibold hover:underline" style="color: var(--primary-color);">Sign Up</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="register-page" class="page flex-col justify-center p-6">
+                 <div class="w-full max-w-sm mx-auto bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+                    <div class="text-center mb-8">
+                        <i class="ph-bold ph-user-plus text-5xl" style="color: var(--primary-color);"></i>
+                        <h1 class="text-3xl font-bold mt-2 text-gray-800">Create Account</h1>
+                        <p class="text-gray-500">Join our platform today!</p>
+                    </div>
+                    <form id="register-form" class="space-y-4">
+                        <div><label for="register-username" class="font-medium text-gray-600 text-sm">Username</label><input type="text" id="register-username" class="form-input mt-1" required placeholder="John Doe" autocomplete="username"></div>
+                        <div><label for="register-phone" class="font-medium text-gray-600 text-sm">Phone Number</label><input type="tel" id="register-phone" class="form-input mt-1" required placeholder="01xxxxxxxxx" autocomplete="tel"></div>
+                        <div><label for="register-email" class="font-medium text-gray-600 text-sm">Email</label><input type="email" id="register-email" class="form-input mt-1" required placeholder="you@example.com" autocomplete="email"></div>
+                        <div><label for="register-password" class="font-medium text-gray-600 text-sm">Password</label><input type="password" id="register-password" class="form-input mt-1" required placeholder="Minimum 6 characters" autocomplete="new-password"></div>
+                        <div><label for="register-refer" class="font-medium text-gray-600 text-sm">Referral Code (Optional)</label><input type="text" id="register-refer" class="form-input mt-1" placeholder="Enter referral code"></div>
+                        <button type="submit" class="btn-primary w-full !mt-6 py-3">Sign Up</button>
+                    </form>
+                    <p class="text-center text-sm text-gray-500 mt-6">Already have an account? <a href="#" id="go-to-login" class="font-semibold hover:underline" style="color: var(--primary-color);">Sign In</a></p>
+                </div>
+            </div>
+
+            <div id="home-page" class="page flex-col">
+                 <header class="p-4 flex justify-between items-center text-white sticky top-0 z-10 shadow-lg" style="background-color: var(--primary-color);">
+                    <div class="flex items-center gap-3">
+                         <img id="home-avatar" src="https://i.ibb.co/pjQk0xDx/image.png" alt="avatar" class="w-12 h-12 rounded-full border-2 border-white object-cover"> <div>
+                             <p class="font-bold text-lg" id="home-username">User</p>
+                             <button id="balance-toggle" class="bg-white/20 text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 hover:bg-white/30 transition">
+                                 <i class="ph ph-currency-bdt"></i><span id="balance-text">Tap for Balance</span>
+                             </button>
+                         </div>
+                    </div>
+                 </header>
+                 <div class="p-4 space-y-6 flex-grow">
+                    
+                    <div id="slider-root" class="slider-container slide-in" style="animation-delay: 0ms;">
+                        <div id="slider-wrapper" class="slider-wrapper">
+                            <div class="slider-item" style="background-image: url('https://i.ibb.co/3W6qXg9/default-slider-bg.jpg');">
+                                <div class="slider-content">
+                                    <h3 class="text-xl font-bold">Welcome to Earning Pro!</h3>
+                                    <p class="text-sm mt-1">Loading new offers...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="slider-dots" class="slider-dots">
+                            </div>
+                    </div>
+
+                    <div id="home-banner" class="hidden p-3 rounded-lg text-center font-semibold text-white shadow-md slide-in" style="animation-delay: 20ms;">
+                        <p id="home-banner-text">Special Offer!</p>
+                    </div>
+
+                    <p id="home-welcome-message" class="text-gray-600 text-sm px-4 text-center slide-in" style="animation-delay: 50ms;">
+                         Loading welcome message...
+                    </p>
+                    
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 150ms;" data-page="task-page"><div class="bg-red-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-check-circle text-2xl text-red-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">Task</span></a>
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 200ms;" data-page="deposit-page"><div class="bg-green-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-wallet text-2xl text-green-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">Deposit</span></a>
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 250ms;" data-page="withdraw-page"><div class="bg-orange-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-hand-coins text-2xl text-orange-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">Withdraw</span></a>
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 300ms;" data-page="plans-page"><div class="bg-blue-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-package text-2xl text-blue-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">Plan</span></a>
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 350ms;" data-page="history-page"><div class="bg-yellow-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-receipt text-2xl text-yellow-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">Transaction</span></a>
+                        <a href="#" class="grid-item group slide-in flex flex-col items-center p-3 bg-white rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-gray-100" style="animation-delay: 400ms;" data-page="helpline-page"><div class="bg-purple-100 p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110"><i class="ph ph-question text-2xl text-purple-600"></i></div><span class="text-xs mt-1 font-medium text-gray-700">HelpLine</span></a>
+                        
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-header" class="hidden p-4 flex items-center gap-4 text-white sticky top-0 z-10 shadow-md" style="background-color: var(--primary-color);">
+                <button id="back-btn"><i class="ph ph-arrow-left text-2xl"></i></button>
+                <h2 id="page-title" class="text-xl font-bold">Page Title</h2>
+            </div>
+            <div id="subpage-container" class="flex-grow" style="display: none; background-color: var(--background-color);">
+                </div>
+        </div>
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-page="home-page"><i class="ph-bold ph-house"></i><span>Home</span></div>
+            <div class="nav-item" data-page="dashboard-page"><i class="ph-bold ph-squares-four"></i><span>Dashboard</span></div>
+            <div class="nav-item" data-page="notifications-page"><i class="ph-bold ph-bell"></i><span>Notifications</span></div>
+            <div class="nav-item" data-page="profile-page"><i class="ph-bold ph-user"></i><span>Profile</span></div>
+        </nav>
+    </main>
+    
+    <template id="history-page-template">
+        <div id="history-page" class="page p-4 space-y-3">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Transaction History</h3>
+            <div id="history-list" class="space-y-3">
+                <div class="text-center text-gray-500 py-10"><i class="ph ph-clock text-4xl mb-2"></i><p>Loading transaction history...</p></div>
+            </div>
+        </div>
+    </template>
+    
+    <template id="dashboard-page-template">
+          <div id="dashboard-page" class="page p-4 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 flex items-center gap-3"><i class="ph ph-chart-line-up text-3xl text-green-500"></i><div><p class="text-sm text-gray-500">Today Income</p><p class="font-bold text-lg">৳<span id="today-income">0.00</span></p></div></div>
+                <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 flex items-center gap-3"><i class="ph ph-chart-line-down text-3xl text-orange-500"></i><div><p class="text-sm text-gray-500">Yesterday Income</p><p class="font-bold text-lg">৳<span id="yesterday-income">0.00</span></p></div></div>
+                <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 flex items-center gap-3"><i class="ph ph-presentation-chart text-3xl text-blue-500"></i><div><p class="text-sm text-gray-500">Ad Income</p><p class="font-bold text-lg">৳<span id="ad-income">0.00</span></p></div></div>
+                <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 flex items-center gap-3"><i class="ph ph-users-three text-3xl text-purple-500"></i><div><p class="text-sm text-gray-500">Refer Income</p><p class="font-bold text-lg">৳<span id="refer-income-dash">0.00</span></p></div></div>
+            </div>
+            <div class="space-y-2 pt-4">
+                <a href="#" id="go-to-refer-btn" class="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition"><div class="flex items-center gap-3"><i class="ph ph-share-network text-2xl" style="color: var(--primary-color);"></i><span class="font-medium">Refer Friends</span></div><i class="ph ph-caret-right text-gray-400"></i></a>
+                <a href="#" id="go-to-history-btn-dash" class="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition"><div class="flex items-center gap-3"><i class="ph ph-receipt text-2xl" style="color: var(--primary-color);"></i><span class="font-medium">Transaction History</span></div><i class="ph ph-caret-right text-gray-400"></i></a>
+                <a href="#" data-page="helpline-page" class="grid-item flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition"><div class="flex items-center gap-3"><i class="ph ph-question text-2xl" style="color: var(--primary-color);"></i><span class="font-medium">Support / HelpLine</span></div><i class="ph ph-caret-right text-gray-400"></i></a>
+            </div>
+        </div>
+    </template>
+
+    <template id="profile-page-template">
+        <div id="profile-page" class="page">
+            <div class="p-6 text-center relative" style="background: linear-gradient(to bottom, #fef2f2, var(--background-color));">
+                 <img id="profile-avatar" src="https://i.ibb.co/pjQk0xDx/image.png" alt="avatar" class="w-20 h-20 rounded-full mx-auto mb-2 border-4 border-white shadow-md object-cover"> <h2 id="profile-username" class="text-xl font-bold text-gray-800">User</h2>
+                <p id="profile-phone" class="text-gray-500 text-sm">Loading...</p>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-envelope text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Email:</span><span id="profile-email" class="font-medium text-gray-800 break-all">Loading...</span></div> <hr/>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-wallet text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Main Balance:</span><span id="profile-balance" class="font-medium text-gray-800">Loading...</span></div>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-arrow-down-left text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Deposit Bal:</span><span id="profile-deposit-balance" class="font-medium text-gray-800">Loading...</span></div> <hr/>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-presentation-chart text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Ad Income:</span><span id="profile-ad-income" class="font-medium text-gray-800">Loading...</span></div>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-share-network text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Refer Income:</span><span id="profile-refer-income" class="font-medium text-gray-800">Loading...</span></div> <hr/>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-qr-code text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Refer Code:</span><span id="profile-refer-code" class="font-medium text-gray-800">Loading...</span></div>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-users text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Total Refs:</span><span id="profile-total-refer" class="font-medium text-gray-800">Loading...</span></div> <hr/>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-package text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Active Plan:</span><span id="profile-active-plan" class="font-medium text-gray-800">Loading...</span></div>
+                     <div class="flex items-center gap-4 text-sm"><i class="ph ph-calendar text-xl w-6 text-center" style="color: var(--primary-color);"></i><span class="text-gray-500 w-28">Joined On:</span><span id="profile-created" class="font-medium text-gray-800">Loading...</span></div>
+                </div>
+                <button id="logout-btn" class="w-full text-red-600 bg-red-50 text-center font-semibold p-3 rounded-lg mt-2 hover:bg-red-100 transition">Log Out</button>
+            </div>
+        </div>
+    </template>
+    
+    <template id="refer-page-template">
+          <div id="refer-page" class="page p-4 space-y-6 text-center">
+               <p class="text-gray-600">আপনার কোড ব্যবহার করে বন্ধুদের রেফার করুন এবং বিশেষ বোনাস অর্জন করুন!</p>
+               <div class="p-6 rounded-lg border-2 border-dashed" style="background-color: #fef2f2; border-color: #fecaca;">
+                 <i class="ph ph-gift text-5xl mx-auto" style="color: var(--primary-color);"></i>
+                 <p class="text-sm text-gray-600 mt-2">আপনার রেফারেল কোড:</p>
+                 <p class="text-3xl font-bold text-gray-800 my-2 tracking-widest" id="refer-code-display">LOADING</p>
+                 <button id="copy-refer-code-btn" class="btn-primary w-full sm:w-auto px-6 inline-block">কোড কপি করুন</button>
+               </div>
+               <div id="referral-bonus-info" class="bg-white p-4 rounded-lg shadow-sm border text-sm text-gray-600">
+                    <i class="ph ph-sparkle text-lg mr-1 text-yellow-500"></i> লোড হচ্ছে...
+               </div>
+               <div class="bg-white p-4 rounded-lg shadow-sm border">
+                 <h4 class="font-semibold text-lg">মোট রেফারেল: <span id="total-refer-display" class="font-bold" style="color: var(--primary-color);">0</span></h4>
+                 <p class="text-xs text-gray-500 mt-1">(যেসব ব্যবহারকারী আপনার কোড দিয়ে সাইন আপ করেছেন)</p>
+               </div>
+          </div>
+    </template>
+    
+    <template id="notifications-page-template">
+        <div id="notifications-page" class="page p-4 space-y-3">
+             <h3 class="text-lg font-semibold text-gray-700 mb-2">Notifications</h3>
+             <div id="notification-list" class="space-y-3">
+                <div class="text-center text-gray-500 py-10"><i class="ph ph-bell-simple-slash text-4xl mb-2"></i><p>Loading notifications...</p></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="task-page-template">
+        <div id="task-page" class="page p-4 space-y-4">
+            <div id="task-page-no-plan" class="flex-grow flex-col items-center justify-center text-center p-6 hidden">
+                <i class="ph ph-clock-countdown text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-700">No Active Plan</h3>
+                <p class="text-gray-500 my-4 max-w-xs">You need to purchase a plan to start completing tasks and earning rewards.</p>
+                <button id="go-to-plans-btn" class="btn-primary px-6 py-2">View Plans</button>
+            </div>
+            
+            <div id="task-page-active" class="flex-col space-y-4 hidden">
+                 <div class="bg-white p-4 rounded-lg shadow-lg border text-center">
+                    <p class="text-sm text-gray-500">Tasks Completed Today</p>
+                    <p class="text-3xl font-extrabold" style="color: var(--primary-color);"><span id="tasks-remaining">0</span> / <span id="tasks-total">0</span></p>
+                </div>
+                <div id="task-list" class="space-y-3">
+                    <div class="text-center text-gray-500 py-10"><i class="ph ph-spinner-gap text-4xl animate-spin mb-2"></i><p>Loading available tasks...</p></div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <template id="deposit-page-template">
+        <div id="deposit-page" class="page p-4 space-y-4">
+             <div class="bg-white p-4 rounded-lg shadow-sm border text-center"><p class="text-sm text-gray-500">Current Main Balance</p><p class="text-2xl font-bold" style="color: var(--primary-color);">৳<span id="deposit-balance-display">0.00</span></p></div>
+             <div id="deposit-notice" class="bg-orange-50 text-orange-700 p-3 rounded-lg text-center text-sm font-medium">Loading deposit limits...</div>
+             <form id="deposit-form-step1" class="bg-white p-4 rounded-lg shadow-sm border space-y-4">
+                <h4 class="font-semibold text-center">Select Payment Method</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="border-2 rounded-lg p-3 text-center cursor-pointer has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition"><input type="radio" name="paymentMethod" value="Bkash" class="sr-only" checked><img src="https://i.ibb.co/B2HwWPWw/download.png" class="h-8 mx-auto" alt="Bkash"></label>
+                    <label class="border-2 rounded-lg p-3 text-center cursor-pointer has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition"><input type="radio" name="paymentMethod" value="Nagad" class="sr-only"><img src="https://i.ibb.co/xq9fXfLN/images.png" class="h-8 mx-auto" alt="Nagad"></label>
+                </div>
+                <div><label for="deposit-amount" class="font-medium text-sm">Amount</label><input type="number" id="deposit-amount" class="form-input mt-1" placeholder="Enter Deposit Amount" required min="100"></div>
+                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <button type="button" class="preset-amount-btn border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition" data-amount="500">500</button>
+                    <button type="button" class="preset-amount-btn border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition" data-amount="1000">1000</button>
+                    <button type="button" class="preset-amount-btn border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition" data-amount="2000">2000</button>
+                    <button type="button" class="preset-amount-btn border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition" data-amount="5000">5000</button>
+                    <button type="button" class="preset-amount-btn border border-gray-300 rounded-md py-2 text-sm font-medium hover:bg-gray-100 transition" data-amount="10000">10000</button>
+                </div>
+                <button type="submit" class="btn-primary w-full !mt-5">Next Step</button>
+            </form>
+        </div>
+    </template>
+    
+    <template id="deposit-details-page-template">
+        <div id="deposit-details-page" class="page p-4 space-y-4">
+             <div class="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm leading-relaxed"><strong>Instructions:</strong><ol class="list-decimal list-inside mt-1 space-y-1"><li>Copy the payment number below.</li><li>Send exactly <strong id="deposit-instruct-amount" class="font-bold">৳0.00</strong> to this number using your payment app's "Send Money" option.</li><li>Enter your Sender Number (the number you sent money *from*) and the Transaction ID (TrxID) you received.</li><li>Submit the request. Your balance will be updated after admin approval.</li></ol></div>
+            <div class="bg-white p-4 rounded-lg shadow-sm border space-y-3">
+                <div class="flex justify-between items-center"><div><p class="text-sm text-gray-500 mb-1">Send Payment To:</p><img id="deposit-method-logo" src="" class="h-6 mb-1" alt="Method"><p id="deposit-to-number" class="font-mono font-semibold text-lg"></p></div><button id="copy-number-btn" class="bg-gray-100 text-sm font-semibold px-3 py-1.5 rounded-md hover:bg-gray-200 transition self-end">Copy</button></div>
+            </div>
+            <form id="deposit-form-step2" class="bg-white p-4 rounded-lg shadow-sm border space-y-4">
+                 <div><label for="sender-number" class="font-medium text-sm">Your Sender Number</label><input type="text" id="sender-number" class="form-input mt-1" placeholder="Number you sent from" required inputmode="numeric"></div>
+                <div><label for="transaction-id" class="font-medium text-sm">Transaction ID (TrxID)</label><input type="text" id="transaction-id" class="form-input mt-1" placeholder="Enter TrxID from payment app" required></div>
+                 <div class="text-xs text-red-500 text-center pt-2">Please double-check all details before submitting. Incorrect information will delay your deposit.</div>
+                <button type="submit" class="btn-primary w-full !mt-5">Submit Deposit Request</button>
+            </form>
+        </div>
+    </template>
+    
+    <template id="withdraw-page-template">
+        <div id="withdraw-page" class="page p-4 space-y-4">
+            <div class="bg-white p-4 rounded-lg shadow-sm border text-center"><p class="text-sm text-gray-500">Available Balance for Withdrawal</p><p class="text-2xl font-bold" style="color: var(--primary-color);">৳<span id="withdraw-balance-display">0.00</span></p></div>
+            <div id="withdraw-notice" class="bg-orange-50 text-orange-700 p-3 rounded-lg text-sm"><strong>Notice:</strong> Loading withdrawal limits...</div>
+            <form id="withdraw-form" class="bg-white p-4 rounded-lg shadow-sm border space-y-4">
+                <h4 class="font-semibold text-center">Select Withdrawal Method</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="border-2 rounded-lg p-3 text-center cursor-pointer has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition"><input type="radio" name="withdrawMethod" value="Bkash" class="sr-only" checked><img src="https://i.ibb.co/B2HwWPWw/download.png" class="h-8 mx-auto" alt="Bkash"></label>
+                    <label class="border-2 rounded-lg p-3 text-center cursor-pointer has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition"><input type="radio" name="withdrawMethod" value="Nagad" class="sr-only"><img src="https://i.ibb.co/xq9fXfLN/images.png" class="h-8 mx-auto" alt="Nagad"></label>
+                </div>
+                <div><label for="withdraw-number" class="font-medium text-sm">Your Receiving Number</label><input type="tel" id="withdraw-number" class="form-input mt-1" placeholder="Enter Bkash/Nagad Number" required inputmode="numeric"></div>
+                <div><label for="withdraw-amount" class="font-medium text-sm">Amount to Withdraw</label><input type="number" id="withdraw-amount" class="form-input mt-1" placeholder="Enter Amount" required min="200"></div>
+                <p id="withdraw-min-notice" class="text-xs text-red-500 text-center !mt-1">Minimum withdraw ... Taka</p>
+                <button type="submit" class="btn-primary w-full !mt-5">Request Withdraw</button>
+            </form>
+        </div>
+    </template>
+
+    <template id="plans-page-template">
+        <div id="plans-page" class="page p-4 space-y-4">
+             <div id="plan-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div id="plan-list-placeholder" class="text-center text-gray-500 py-10 col-span-full"><i class="ph ph-package text-4xl mb-2"></i><p>Loading available plans...</p></div>
+             </div>
+        </div>
+    </template>
+    
+    <template id="helpline-page-template">
+        <div id="helpline-page" class="page p-4 space-y-4">
+             <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Contact Support</h3>
+                <p class="text-gray-600 text-center mb-6">If you have any issues or questions, please reach out:</p>
+                <div id="support-links-container" class="space-y-4">
+                    <div class="text-center text-gray-500 py-5">
+                        <i class="ph ph-spinner-gap text-3xl animate-spin"></i>
+                        <p>Loading support links...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script type="module">
+        // ---------------------------------------------------------------------
+        // Firebase Imports & Configuration
+        // ---------------------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, onSnapshot, serverTimestamp, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // IMPORTANT: Replace with your actual Firebase config
+        // NOTE: These IDs are for demonstration. Replace with your actual IDs.
+        const firebaseConfig = {
+          apiKey: "AIzaSyDgcmXWDzignQmSY7_HirzLz3b07oDMzHg",
+          authDomain: "earn-pro-e572b.firebaseapp.com",
+          projectId: "earn-pro-e572b",
+          storageBucket: "earn-pro-e572b.appspot.com",
+          messagingSenderId: "497221114373",
+          appId: "1:497221114373:web:5b908d64de853c027b5a6c",
+          measurementId: "G-9K0E7MGNJ4"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ---------------------------------------------------------------------
+        // Global State & Variables
+        // ---------------------------------------------------------------------
+        let currentUser = null; 
+        let userData = null;
+        let allPlans = [];
+        // ADDED: New variable for sliders
+        let allSliders = []; 
+        let unsubscribeUser, unsubscribePlans, unsubscribeNotifications, unsubscribeTasks, unsubscribeSettings, unsubscribeSliders;
+        let currentSubPage = null;
+        let depositData = {};
+        
+        // --- UPDATED appSettings DEFAULTS ---
+        let appSettings = { 
+            taskTimer: 30,
+            paymentSettings: null, 
+            homepage: null,
+            registrationBonus: 0.00,
+            referrerPlanDiscountPercent: 0,
+            // Added new limits with defaults
+            minDeposit: 100,
+            maxDeposit: 10000,
+            minWithdraw: 200,
+            maxWithdraw: 5000
+        };
+        const activeTimers = {};
+
+        // ---------------------------------------------------------------------
+        // DOM Elements Cache
+        // ---------------------------------------------------------------------
+        const loader = document.getElementById('loader');
+        const allPages = {
+            login: document.getElementById('login-page'),
+            register: document.getElementById('register-page'),
+            home: document.getElementById('home-page'),
+        };
+        const navItems = document.querySelectorAll('.nav-item');
+        const subpageContainer = document.getElementById('subpage-container');
+        const pageHeader = document.getElementById('page-header');
+        const pageTitle = document.getElementById('page-title');
+        const modalElement = document.getElementById('customModal');
+        
+        // ---------------------------------------------------------------------
+        // UTILITY FUNCTIONS
+        // ---------------------------------------------------------------------
+        const showLoader = () => { loader.style.display = 'flex'; };
+        const hideLoader = () => { loader.style.display = 'none'; };
+        
+        const showModal = (title, message) => {
+            modalElement.querySelector('#modalTitle').textContent = title;
+            modalElement.querySelector('#modalMessage').textContent = message;
+
+            // --- NEW: Reset buttons every time modal is shown ---
+            const modalContent = modalElement.querySelector('.custom-modal');
+            // 1. Remove any extra buttons (like the 'Log Out' button)
+            modalContent.querySelector('.modal-extra-btn')?.remove();
+
+            // 2. Find the main close button and reset it
+            const closeBtn = modalContent.querySelector('#modalCloseBtn');
+            if (closeBtn) {
+                closeBtn.textContent = 'OK';
+                // Remove any custom .onclick handler (like the logout-cancel one)
+                closeBtn.onclick = null; 
+            }
+            // --- END NEW ---
+
+            modalElement.classList.add('visible');
+        };
+        const hideModal = () => { modalElement.classList.remove('visible'); };
+        
+        const formatCurrency = (amount) => `৳${parseFloat(amount || 0).toFixed(2)}`;
+        
+        const formatDate = (timestamp) => {
+             if (!timestamp) return 'N/A';
+            try {
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                // Fix: ensure the date object is valid before calling toLocaleString
+                if(isNaN(date)) return 'Invalid Date';
+                return date.toLocaleString('en-BD', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+            } catch (error) {
+                 return 'Invalid Date';
+            }
+        };
+
+        const applyTheme = (themeColors) => {
+            if (!themeColors) return;
+            const root = document.documentElement;
+            if (themeColors.primary) {
+                root.style.setProperty('--primary-color', themeColors.primary);
+            }
+            if (themeColors.secondary) {
+                root.style.setProperty('--primary-color-hover', themeColors.secondary);
+            }
+            if (themeColors.background) {
+                root.style.setProperty('--background-color', themeColors.background);
+            }
+        };
+
+        const applyHomepageSettings = (homepageSettings) => {
+            if (!homepageSettings) return;
+
+            const welcomeMsg = document.getElementById('home-welcome-message');
+            if (welcomeMsg) {
+                welcomeMsg.textContent = homepageSettings.welcomeMessage || 'Welcome to our platform!';
+            }
+
+            // NEW: Handle Banner
+            const banner = document.getElementById('home-banner');
+            const bannerText = document.getElementById('home-banner-text');
+            if (banner && bannerText && homepageSettings.bannerText) {
+                bannerText.textContent = homepageSettings.bannerText;
+                banner.style.backgroundColor = homepageSettings.bannerBgColor || 'var(--primary-color)';
+                banner.classList.remove('hidden');
+            } else if (banner) {
+                banner.classList.add('hidden');
+            }
+
+            // NEW: Handle YouTube Link
+            const youtubeLink = document.getElementById('home-youtube-link');
+            if (youtubeLink && homepageSettings.youtubeLink) {
+                youtubeLink.href = homepageSettings.youtubeLink;
+                youtubeLink.classList.remove('hidden');
+            } else if (youtubeLink) {
+                youtubeLink.classList.add('hidden');
+            }
+        };
+        
+        // ---------------------------------------------------------------------
+        // NEW: SLIDER LOGIC
+        // ---------------------------------------------------------------------
+        let currentSlide = 0;
+        const sliderWrapper = document.getElementById('slider-wrapper');
+        const sliderDots = document.getElementById('slider-dots');
+        let slideInterval;
+
+        const renderSlider = () => {
+            if (!sliderWrapper || !sliderDots) return;
+            sliderWrapper.innerHTML = '';
+            sliderDots.innerHTML = '';
+            currentSlide = 0;
+
+            if (allSliders.length === 0) {
+                // Default item if no sliders are active
+                 sliderWrapper.innerHTML = `<div class="slider-item" style="background-image: url('https://i.ibb.co/3W6qXg9/default-slider-bg.jpg');">
+                                <div class="slider-content">
+                                    <h3 class="text-xl font-bold">Welcome to Earning Pro!</h3>
+                                    <p class="text-sm mt-1">Loading new offers...</p>
+                                </div>
+                            </div>`;
+                return;
+            }
+
+            allSliders.forEach((slider, index) => {
+                const sliderItem = document.createElement('a');
+                sliderItem.className = 'slider-item';
+                sliderItem.style.backgroundImage = `url('${slider.imageUrl || 'https://i.ibb.co/3W6qXg9/default-slider-bg.jpg'}')`;
+                if (slider.linkUrl) {
+                    sliderItem.href = slider.linkUrl;
+                    sliderItem.target = '_blank';
+                } else {
+                    sliderItem.href = '#';
+                    sliderItem.onclick = (e) => e.preventDefault();
+                }
+
+                sliderItem.innerHTML = `
+                    <div class="slider-content">
+                        <h3 class="text-xl font-bold">${slider.title || 'New Offer'}</h3>
+                        ${slider.subtitle ? `<p class="text-sm mt-1">${slider.subtitle}</p>` : ''}
+                    </div>
+                `;
+                sliderWrapper.appendChild(sliderItem);
+
+                const dot = document.createElement('div');
+                dot.className = 'slider-dot';
+                dot.onclick = () => goToSlide(index);
+                sliderDots.appendChild(dot);
+            });
+
+            updateSliderUI();
+            startAutoSlide();
+        };
+
+        const updateSliderUI = () => {
+            if (allSliders.length === 0) return;
+            const offset = -currentSlide * 100;
+            sliderWrapper.style.transform = `translateX(${offset}%)`;
+
+            sliderDots.querySelectorAll('.slider-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        };
+
+        const goToSlide = (index) => {
+            currentSlide = index;
+            updateSliderUI();
+            resetAutoSlide();
+        };
+
+        const nextSlide = () => {
+            currentSlide = (currentSlide + 1) % allSliders.length;
+            updateSliderUI();
+        };
+
+        const startAutoSlide = () => {
+            if (slideInterval) clearInterval(slideInterval);
+            if (allSliders.length > 1) {
+                slideInterval = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+            }
+        };
+
+        const resetAutoSlide = () => {
+            startAutoSlide();
+        };
+
+        // ---------------------------------------------------------------------
+        // NAVIGATION LOGIC
+        // ---------------------------------------------------------------------
+        const navigateTo = (pageId, isSubPage = false, title = '') => {
+            Object.values(allPages).forEach(p => p.classList.remove('active'));
+            currentSubPage = null;
+
+            if (isSubPage) {
+                const template = document.getElementById(`${pageId}-template`);
+                if (!template) {
+                    console.error(`Template for page "${pageId}" not found.`);
+                    return navigateTo('home-page');
+                }
+                const pageContent = template.content.cloneNode(true);
+                subpageContainer.innerHTML = '';
+                subpageContainer.appendChild(pageContent);
+                
+                allPages.home.classList.remove('active');
+                subpageContainer.style.display = 'block';
+                pageHeader.style.display = 'flex';
+                pageTitle.textContent = title;
+                subpageContainer.querySelector('.page')?.classList.add('active');
+                currentSubPage = pageId;
+
+                // Page-specific setup after content is in the DOM
+                if (pageId === 'task-page') setupTaskPage();
+                if (pageId === 'dashboard-page') updateDashboardMetrics();
+                if (pageId === 'history-page') fetchAndDisplayHistory(currentUser?.uid);
+                if (pageId === 'plans-page') renderPlansPage();
+                if (pageId === 'notifications-page') listenForNotifications();
+                if (pageId === 'helpline-page') setupHelplinePage();
+                if (pageId === 'refer-page') setupReferPage(); 
+                // --- NEW: Call setup functions ---
+                if (pageId === 'deposit-page') setupDepositPage();
+                if (pageId === 'withdraw-page') setupWithdrawPage();
+
+                updateUIWithUserData(); // Refresh UI for the new page
+
+            } else {
+                subpageContainer.style.display = 'none';
+                pageHeader.style.display = 'none';
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                    if (pageId === 'home-page' && appSettings.homepage) {
+                         applyHomepageSettings(appSettings.homepage);
+                    }
+                } else {
+                    allPages.home.classList.add('active');
+                }
+            }
+
+            updateActiveNav(pageId);
+            window.scrollTo(0, 0);
+        };
+        
+        const updateActiveNav = (pageId) => {
+             navItems.forEach(item => {
+                const navPageId = item.dataset.page;
+                const isActive = (navPageId === pageId) || (currentSubPage && navPageId === currentSubPage);
+                item.classList.toggle('active', isActive);
+             });
+        };
+
+        // ---------------------------------------------------------------------
+        // AUTHENTICATION & SESSION MANAGEMENT
+        // ---------------------------------------------------------------------
+        document.getElementById('modalCloseBtn').addEventListener('click', hideModal);
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            if (!email) {
+                showModal('Password Reset', 'Please enter your email address in the login field first.');
+                return;
+            }
+            showLoader();
+            sendPasswordResetEmail(auth, email)
+                .then(() => showModal('Success', `Password reset link sent to ${email}. Check your inbox!`))
+                .catch((error) => showModal('Error', error.message))
+                .finally(hideLoader);
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                if (currentUser?.uid === user.uid) return;
+                currentUser = user;
+                showLoader();
+
+                await checkPlanStatus(user.uid);
+                setupRealtimeListeners(user.uid);      
+                navigateTo('home-page');
+            } else {
+                if (!currentUser) { hideLoader(); navigateTo('login-page'); return; }
+                currentUser = null;
+                userData = null;
+                
+                Object.values(activeTimers).forEach(timer => clearInterval(timer));
+                [unsubscribeUser, unsubscribePlans, unsubscribeNotifications, unsubscribeTasks, unsubscribeSettings, unsubscribeSliders].forEach(unsub => unsub && unsub());
+
+                navigateTo('login-page');
+                hideLoader();
+            }
+        });
+        
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+             e.preventDefault(); showLoader();
+             const email = document.getElementById('login-email').value;
+             const password = document.getElementById('login-password').value;
+             try { await signInWithEmailAndPassword(auth, email, password); } 
+             catch (error) { showModal('Login Failed', error.message); hideLoader(); }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+             e.preventDefault(); showLoader();
+             const { email, password, username, phone, referCodeInput } = {
+                 email: document.getElementById('register-email').value.trim(),
+                 password: document.getElementById('register-password').value,
+                 username: document.getElementById('register-username').value.trim(),
+                 phone: document.getElementById('register-phone').value.trim(),
+                 referCodeInput: document.getElementById('register-refer').value.trim().toUpperCase()
+             };
+
+             if (password.length < 6) { showModal('Password Too Short', 'Password must be at least 6 characters long.'); hideLoader(); return; }
+
+             try {
+                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                 // MODIFIED: Use registrationBonus from appSettings
+                 const initialBalance = appSettings.registrationBonus || 0.00;
+                 
+                 const newUser = {
+                     username, email, phone, 
+                     balance: initialBalance, // MODIFIED
+                     depositBalance: 0, 
+                     referIncome: 0, 
+                     adIncome: 0,
+                     referCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+                     referredBy: referCodeInput || null, 
+                     totalRefer: 0,
+                     accountCreateDate: serverTimestamp(), activePlan: null, activePlanName: null, 
+                     planActivationDate: null, planValidity: 0, tasksCompletedToday: 0, lastTaskReset: serverTimestamp(),
+                     completedTasks: {} 
+                 };
+                 await setDoc(doc(db, "users", userCredential.user.uid), newUser);
+                 
+                 // If there's a referral code, try to find the referrer and update their count
+                 if (referCodeInput) {
+                     const referrerQuery = query(collection(db, "users"), where("referCode", "==", referCodeInput), limit(1));
+                     const referrerSnap = await getDocs(referrerQuery);
+
+                     if (!referrerSnap.empty) {
+                         const referrerDoc = referrerSnap.docs[0];
+                         await updateDoc(doc(db, "users", referrerDoc.id), {
+                             totalRefer: (referrerDoc.data().totalRefer || 0) + 1
+                         });
+                         // No direct bonus for referrer here, bonus is given to the new user on plan purchase.
+                     }
+                 }
+                 
+                 if (initialBalance > 0) {
+                      await addDoc(collection(db, "transactions"), {
+                         userId: userCredential.user.uid, type: 'registration_bonus', amount: initialBalance,
+                         details: 'Initial registration bonus', status: 'approved', timestamp: serverTimestamp()
+                     });
+                 }
+                 
+             } catch (error) {
+                  let message = error.code === 'auth/email-already-in-use' ? 'This email is already registered.' : 'Could not create account: ' + error.message;
+                  showModal('Registration Failed', message);
+                  hideLoader();
+             }
+        });
+        
+        // ---------------------------------------------------------------------
+        // DATA FETCHING & REAL-TIME LISTENERS
+        // ---------------------------------------------------------------------
+        const checkPlanStatus = async (uid) => {
+             const userRef = doc(db, "users", uid);
+             try {
+                 const userSnap = await getDoc(userRef);
+                 if (!userSnap.exists()) return;
+                 const data = userSnap.data();
+                 const updates = {};
+                 let planExpired = false;
+
+                 if (data.activePlan && data.planActivationDate && data.planValidity > 0) {
+                     const expiryDate = data.planActivationDate.toDate();
+                     expiryDate.setDate(expiryDate.getDate() + data.planValidity);
+                     if (new Date() > expiryDate) {
+                         Object.assign(updates, { activePlan: null, activePlanName: null, planActivationDate: null, planValidity: 0 });
+                         planExpired = true;
+                     }
+                 }
+
+                 const today = new Date().toDateString();
+                 if (!data.lastTaskReset || (data.lastTaskReset.toDate && data.lastTaskReset.toDate().toDateString() !== today)) {
+                     Object.assign(updates, { tasksCompletedToday: 0, completedTasks: {}, lastTaskReset: serverTimestamp() });
+                 }
+
+                 if (Object.keys(updates).length > 0) {
+                     await updateDoc(userRef, updates);
+                     if(planExpired) showModal("Plan Expired", "Your plan has expired. Purchase a new one to continue earning.");
+                 }
+             } catch(e) { console.error("Error checking plan status", e); }
+        };
+
+        const setupRealtimeListeners = (uid) => {
+            [unsubscribeUser, unsubscribePlans, unsubscribeNotifications, unsubscribeTasks, unsubscribeSettings, unsubscribeSliders].forEach(unsub => unsub && unsub());
+
+            unsubscribeUser = onSnapshot(doc(db, "users", uid), (doc) => {
+                if (doc.exists()) {
+                    userData = doc.data();
+                    updateUIWithUserData();
+                    if (currentSubPage === 'task-page') setupTaskPage();
+                    if (currentSubPage === 'plans-page') renderPlansPage();
+                    if (currentSubPage === 'dashboard-page') updateDashboardMetrics();
+                    if (currentSubPage === 'refer-page') setupReferPage();
+                    // --- NEW: Refresh page UI if open ---
+                    if (currentSubPage === 'deposit-page') setupDepositPage();
+                    if (currentSubPage === 'withdraw-page') setupWithdrawPage();
+                    hideLoader();
+                } else {
+                    signOut(auth);
+                }
+            }, (error) => { console.error("User data listener error:", error); signOut(auth); });
+
+            unsubscribeSettings = onSnapshot(doc(db, "appSettings", "main"), (doc) => {
+                if (doc.exists()) {
+                    const settingsData = doc.data();
+
+                    // NEW: Maintenance Mode Check
+                    const maintenanceMode = settingsData.appSettings?.maintenanceMode || false;
+                    const maintenanceOverlay = document.getElementById('maintenance-overlay');
+                    if (maintenanceMode) {
+                        if (maintenanceOverlay) maintenanceOverlay.style.display = 'flex';
+                        hideLoader();
+                        return; // Stop processing the rest of the app
+                    } else {
+                        if (maintenanceOverlay) maintenanceOverlay.style.display = 'none';
+                    }
+                    // END NEW
+
+                    if (settingsData.themeColors) applyTheme(settingsData.themeColors);
+                    
+                    // --- UPDATED: Read new settings ---
+                    if (settingsData.appSettings) {
+                        appSettings.taskTimer = settingsData.appSettings.defaultTaskTimer || 30;
+                        appSettings.registrationBonus = parseFloat(settingsData.appSettings.registrationBonus || 0);
+                        appSettings.referrerPlanDiscountPercent = parseFloat(settingsData.appSettings.referrerPlanDiscountPercent || 0);
+                        // Add new limits
+                        appSettings.minDeposit = parseFloat(settingsData.appSettings.minDeposit || 100);
+                        appSettings.maxDeposit = parseFloat(settingsData.appSettings.maxDeposit || 10000);
+                        appSettings.minWithdraw = parseFloat(settingsData.appSettings.minWithdraw || 200);
+                        appSettings.maxWithdraw = parseFloat(settingsData.appSettings.maxWithdraw || 5000);
+                    }
+                    // --- END UPDATE ---
+                    
+                    if (settingsData.paymentSettings) appSettings.paymentSettings = settingsData.paymentSettings;
+                    if (settingsData.homepage) {
+                        appSettings.homepage = settingsData.homepage;
+                        if (allPages.home.classList.contains('active')) {
+                             applyHomepageSettings(settingsData.homepage);
+                        }
+                    }
+                    if (currentSubPage === 'helpline-page') setupHelplinePage();
+                    // --- NEW: Refresh page UI if open ---
+                    if (currentSubPage === 'deposit-page') setupDepositPage();
+                    if (currentSubPage === 'withdraw-page') setupWithdrawPage();
+                }
+            });
+            
+            // NEW: Slider Listener
+            unsubscribeSliders = onSnapshot(query(collection(db, "homepageSliders"), where("active", "==", true)), (snapshot) => {
+                 // FIX: Removed orderBy() from query and added client-side sorting
+                 // to prevent the composite index error, just like with support links.
+                 allSliders = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => (a.order || 0) - (b.order || 0));
+                 renderSlider();
+            }, (error) => { console.error("Slider listener error:", error); });
+
+
+            const plansQuery = query(collection(db, "plans"), where("active", "==", true));
+            unsubscribePlans = onSnapshot(plansQuery, (snapshot) => {
+                const plans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 plans.sort((a, b) => (a.price || 0) - (b.price || 0));
+                 allPlans = plans;
+
+                 if (currentSubPage === 'plans-page') {
+                     renderPlansPage();
+                 }
+            }, (error) => {
+                console.error("Firestore Error fetching plans:", error);
+                 if (currentSubPage === 'plans-page') {
+                     const placeholder = document.getElementById('plan-list-placeholder');
+                     if (placeholder) {
+                         placeholder.innerHTML = `<div class="text-center text-red-500"><i class="ph ph-warning-circle text-4xl mb-2"></i><p class="font-semibold">Error Loading Plans</p><p class="text-sm mt-1">There was an issue fetching plans. Please try again later.</p></div>`;
+                     }
+                 }
+            });
+        };
+
+        const updateUIWithUserData = () => {
+             if (!userData) return;
+             document.getElementById('home-username').textContent = userData.username || 'User';
+             const balanceText = document.getElementById('balance-text');
+             balanceText.textContent = 'Tap for Balance';
+             
+             // Ensure the balance toggle is properly bound
+             const balanceToggle = document.getElementById('balance-toggle');
+             if(balanceToggle) {
+                 balanceToggle.onclick = () => {  
+                    balanceText.textContent = balanceText.textContent === 'Tap for Balance' ? formatCurrency(userData.balance) : 'Tap for Balance'; 
+                 };
+             }
+
+             if(currentSubPage === 'profile-page' && document.getElementById('profile-username')) {
+                 document.getElementById('profile-username').textContent = userData.username || 'N/A';
+                 document.getElementById('profile-phone').textContent = userData.phone || 'N/A';
+                 document.getElementById('profile-email').textContent = userData.email || 'N/A';
+                 document.getElementById('profile-balance').textContent = formatCurrency(userData.balance);
+                 document.getElementById('profile-deposit-balance').textContent = formatCurrency(userData.depositBalance);
+                 document.getElementById('profile-ad-income').textContent = formatCurrency(userData.adIncome);
+                 document.getElementById('profile-refer-income').textContent = formatCurrency(userData.referIncome);
+                 document.getElementById('profile-refer-code').textContent = userData.referCode || 'N/A';
+                 document.getElementById('profile-total-refer').textContent = userData.totalRefer || 0;
+                 document.getElementById('profile-created').textContent = formatDate(userData.accountCreateDate);
+                 document.getElementById('profile-active-plan').textContent = userData.activePlanName || 'No Active Plan';
+             }
+             
+             if(currentSubPage === 'deposit-page' && document.getElementById('deposit-balance-display')) {
+                 document.getElementById('deposit-balance-display').textContent = (userData.balance || 0).toFixed(2);
+             }
+             
+             if(currentSubPage === 'withdraw-page' && document.getElementById('withdraw-balance-display')) {
+                 document.getElementById('withdraw-balance-display').textContent = (userData.balance || 0).toFixed(2);
+             }
+             
+             if(currentSubPage === 'refer-page' && document.getElementById('refer-code-display')) {
+                 document.getElementById('refer-code-display').textContent = userData.referCode || 'N/A';
+                 document.getElementById('total-refer-display').textContent = userData.totalRefer || 0;
+             }
+        };
+        
+        const setupReferPage = () => {
+             if (currentSubPage !== 'refer-page' || !document.getElementById('referral-bonus-info')) return;
+             const percent = appSettings.referrerPlanDiscountPercent;
+             let message = `আপনার কোড ব্যবহার করে সাইন আপ করা বন্ধু তার প্রথম প্ল্যান কেনার সময় প্ল্যান মূল্যের উপর ${percent}% ডিসকাউন্ট পাবে।`;
+             if(percent === 0) message = 'আপনার বন্ধুকে ডিসকাউন্ট দেওয়ার জন্য রেফারেল বোনাস বর্তমানে বন্ধ আছে।';
+             
+             document.getElementById('referral-bonus-info').innerHTML = `<i class="ph ph-sparkle text-lg mr-1 text-yellow-500"></i> ${message}`;
+        };
+
+        // --- NEW: Function to setup deposit page UI ---
+        const setupDepositPage = () => {
+            if (currentSubPage !== 'deposit-page' || !document.getElementById('deposit-notice')) return;
+            
+            const notice = document.getElementById('deposit-notice');
+            const amountInput = document.getElementById('deposit-amount');
+            
+            let noticeText = `Notice: Min deposit ${formatCurrency(appSettings.minDeposit)}.`;
+            if (appSettings.maxDeposit > 0) {
+                 noticeText = `Notice: Min deposit ${formatCurrency(appSettings.minDeposit)} & Max ${formatCurrency(appSettings.maxDeposit)}.`;
+            }
+            notice.textContent = `${noticeText} Deposits require admin approval.`;
+            
+            amountInput.min = appSettings.minDeposit;
+            amountInput.placeholder = `Enter Amount (min ${appSettings.minDeposit})`;
+        };
+
+        // --- NEW: Function to setup withdraw page UI ---
+        const setupWithdrawPage = () => {
+            if (currentSubPage !== 'withdraw-page' || !document.getElementById('withdraw-notice')) return;
+            
+            const notice = document.getElementById('withdraw-notice');
+            const minNotice = document.getElementById('withdraw-min-notice');
+            const amountInput = document.getElementById('withdraw-amount');
+            
+            let noticeText = `Min withdraw ${formatCurrency(appSettings.minWithdraw)}.`;
+            if (appSettings.maxWithdraw > 0) {
+                 noticeText = `Min withdraw ${formatCurrency(appSettings.minWithdraw)} & Max ${formatCurrency(appSettings.maxWithdraw)}.`;
+            }
+            notice.innerHTML = `<strong>Notice:</strong> ${noticeText} Withdrawals require admin approval.`;
+            
+            minNotice.textContent = `Minimum withdraw ${formatCurrency(appSettings.minWithdraw)}`;
+            amountInput.min = appSettings.minWithdraw;
+            amountInput.placeholder = `Enter Amount (min ${appSettings.minWithdraw})`;
+        };
+        
+        const fetchAndDisplayHistory = (uid) => {
+             if (!uid) return;
+             const historyQuery = query(collection(db, "transactions"), where("userId", "==", uid), limit(50));
+             
+             getDocs(historyQuery).then(snapshot => {
+                  if (currentSubPage !== 'history-page') return;
+                  const historyList = document.getElementById('history-list');
+                  if(!historyList) return;
+
+                  if (snapshot.empty) {
+                       historyList.innerHTML = '<div class="text-center text-gray-500 py-10"><i class="ph ph-clock text-4xl mb-2"></i><p>No transactions yet.</p></div>';
+                       return;
+                  }
+                  
+                  const docs = snapshot.docs;
+                  // Client-side sort: new transactions first
+                  docs.sort((a, b) => {
+                       const timeA = a.data().timestamp?.toMillis() || 0;
+                       const timeB = b.data().timestamp?.toMillis() || 0;
+                       return timeB - timeA;
+                  });
+
+                  historyList.innerHTML = docs.map(doc => {
+                       const t = doc.data();
+                       const statusColors = { pending: 'text-yellow-600 bg-yellow-100', approved: 'text-green-600 bg-green-100', rejected: 'text-red-600 bg-red-100' };
+                       let icon, title, amountColor, prefix;
+                       switch (t.type) {
+                            case 'deposit': icon = '<i class="ph ph-arrow-down-left text-green-500 text-2xl"></i>'; title = 'Deposit'; amountColor = 'text-green-600'; prefix = '+'; break;
+                            case 'withdraw': icon = '<i class="ph ph-arrow-up-right text-orange-500 text-2xl"></i>'; title = 'Withdraw'; amountColor = 'text-orange-600'; prefix = '-'; break;
+                            case 'plan_purchase': icon = '<i class="ph ph-package text-blue-500 text-2xl"></i>'; title = t.details; amountColor = 'text-red-600'; prefix = '-'; break;
+                            case 'ad_income': icon = '<i class="ph ph-presentation-chart text-purple-500 text-2xl"></i>'; title = t.details; amountColor = 'text-purple-600'; prefix = '+'; break;
+                            case 'registration_bonus': icon = '<i class="ph ph-gift text-yellow-500 text-2xl"></i>'; title = 'Registration Bonus'; amountColor = 'text-yellow-600'; prefix = '+'; break;
+                            case 'referral_discount': icon = '<i class="ph ph-tag text-blue-500 text-2xl"></i>'; title = 'Referral Discount'; amountColor = 'text-green-600'; prefix = '+'; break;
+                            case 'referral_commission': icon = '<i class="ph ph-users text-purple-500 text-2xl"></i>'; title = 'Referral Commission'; amountColor = 'text-green-600'; prefix = '+'; break;
+                            default: icon = '<i class="ph ph-info text-gray-500 text-2xl"></i>'; title = t.type; amountColor = 'text-gray-800'; prefix = ''; break;
+                       }
+                       // Handle status for registration_bonus to always show approved
+                       const finalStatus = (t.type === 'registration_bonus' || t.type === 'referral_commission') ? 'approved' : t.status;
+                       const statusDisplay = `<p class="text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${statusColors[finalStatus] || 'text-gray-600 bg-gray-100'}">${finalStatus}</p>`;
+                       
+                       return `
+                           <div class="bg-white p-3 rounded-lg shadow-sm border flex items-center justify-between">
+                                <div class="flex items-center gap-3 overflow-hidden"> ${icon} <div class="flex-1 min-w-0"><p class="font-semibold capitalize truncate">${title}</p><p class="text-xs text-gray-500">${formatDate(t.timestamp)}</p></div> </div>
+                                <div class="text-right"><p class="font-bold ${amountColor}">${prefix} ${formatCurrency(t.amount)}</p>${statusDisplay}</div>
+                           </div>`;
+                  }).join('');
+             });
+        };
+        
+        const renderPlansPage = () => {
+            // Logic remains the same, relies on allPlans being populated by listener
+            if (currentSubPage !== 'plans-page') return;
+            const planList = document.getElementById('plan-list');
+            const placeholder = document.getElementById('plan-list-placeholder');
+            if(!planList || !placeholder) return;
+            
+            // Check if user has a referrer and if discount is active
+            const hasReferrer = !!userData?.referredBy;
+            const discountPercent = appSettings.referrerPlanDiscountPercent || 0;
+            const hasDiscount = hasReferrer && discountPercent > 0;
+            
+            setTimeout(() => {
+                if (allPlans.length === 0) {
+                    placeholder.innerHTML = '<p>No plans available at the moment.</p>';
+                    placeholder.style.display = 'block';
+                    planList.innerHTML = '';
+                } else {
+                    placeholder.style.display = 'none';
+                    planList.innerHTML = allPlans.map(plan => {
+                        const isCurrent = userData?.activePlan === plan.id;
+                        const cardBorder = isCurrent ? `border-2` : 'border';
+                        const cardBorderColor = isCurrent ? `style="border-color: var(--primary-color);"` : 'border-gray-200';
+                        
+                        let finalPrice = plan.price;
+                        let discountInfo = '';
+                        let originalPriceDisplay = '';
+                        
+                        if (hasDiscount && !userData.planActivationDate) { // Apply discount only on first plan purchase
+                            const discountAmount = plan.price * (discountPercent / 100);
+                            finalPrice = plan.price - discountAmount;
+                            originalPriceDisplay = `<p class="text-sm line-through text-gray-400">৳${parseFloat(plan.price).toFixed(2)}</p>`;
+                            discountInfo = `<p class="text-xs text-green-600 font-semibold mt-1">-${discountPercent}% Referral Discount!</p>`;
+                        }
+
+                        return `
+                            <div class="bg-white rounded-lg shadow-lg overflow-hidden ${cardBorder} ${cardBorderColor} relative">
+                                ${isCurrent ? `<div class="absolute top-2 -right-10 text-white text-xs font-bold px-10 py-1 transform rotate-45" style="background-color: var(--primary-color);">Active</div>` : ''}
+                                <div class="p-5 text-center ${isCurrent ? 'bg-red-50' : 'bg-gray-50'}">
+                                    <h4 class="text-xl font-bold ${isCurrent ? 'text-red-700' : 'text-gray-800'}">${plan.name}</h4>
+                                    ${originalPriceDisplay}
+                                    <p class="text-4xl font-extrabold mt-0" style="color: var(--primary-color);">${formatCurrency(finalPrice)}</p>
+                                    ${discountInfo}
+                                </div>
+                                <ul class="p-5 space-y-3 text-sm">
+                                    <li class="flex items-center gap-3"><i class="ph-fill ph-check-circle text-green-500 text-lg"></i><span>Daily Income: <strong class="font-semibold text-gray-700">${formatCurrency(plan.dailyIncome)}</strong></span></li>
+                                    <li class="flex items-center gap-3"><i class="ph-fill ph-presentation-chart text-purple-500 text-lg"></i><span>Daily Ads: <strong class="font-semibold text-gray-700">${plan.dailyAds}</strong></span></li>
+                                    <li class="flex items-center gap-3"><i class="ph-fill ph-clock text-blue-500 text-lg"></i><span>Validity: <strong class="font-semibold text-gray-700">${plan.validity} Days</strong></span></li>
+                                </ul>
+                                <div class="p-4 bg-gray-50/50"><button class="btn-primary w-full buy-plan-btn py-2.5" data-plan-id="${plan.id}" data-plan-name="${plan.name}" data-plan-price="${plan.price}" data-plan-final-price="${finalPrice}" data-plan-validity="${plan.validity}" data-is-discounted="${hasDiscount && !userData.planActivationDate}" ${isCurrent ? 'disabled' : ''}>${isCurrent ? 'Current Plan' : 'Buy Now'}</button></div>
+                            </div>`;
+                    }).join('');
+                }
+            }, 100); 
+        };
+
+        const listenForNotifications = () => {
+            const notificationsQuery = query(collection(db, "notifications"), orderBy("timestamp", "desc"), limit(30));
+            unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+                 if (currentSubPage !== 'notifications-page') return;
+                 const list = document.getElementById('notification-list');
+                 if(!list) return;
+                 if(snapshot.empty) { list.innerHTML = '<div class="text-center text-gray-500 py-10"><i class="ph ph-bell-simple-slash text-4xl mb-2"></i><p>No notifications yet.</p></div>'; return; }
+                 list.innerHTML = snapshot.docs.map(doc => {
+                     const n = doc.data();
+                     return `<div class="bg-white p-4 rounded-lg shadow-sm border"><h4 class="font-semibold text-gray-800 mb-1">${n.title}</h4><p class="text-sm text-gray-600 mb-2 whitespace-pre-wrap">${n.message}</p><p class="text-xs text-right text-gray-400">${formatDate(n.timestamp)}</p></div>`;
+                 }).join('');
+            });
+        };
+const setupHelplinePage = async () => {
+                const container = document.getElementById('support-links-container');
+                if (!container) return;
+
+                try {
+                    // --- FIX ---
+                    // Removed orderBy("order", "asc") from the query.
+                    // A query with where() and orderBy() on different fields requires a composite index
+                    // in Firebase, which was causing your query to fail.
+                    // We will sort the links in the code *after* fetching them.
+                    const linksQuery = query(
+                             collection(db, "supportLinks"), 
+                             where("status", "==", "active")
+                    );
+                    
+                    const snapshot = await getDocs(linksQuery);
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p class="text-center text-gray-500">No support links are available right now.</p>';
+                        return;
+                    }
+                    
+                    // Sort the results here using JavaScript, which respects your admin panel's ordering
+                    const links = snapshot.docs
+                        .map(doc => doc.data())
+                        .sort((a, b) => (a.order || 0) - (b.order || 0)); // Safely sort by order
+
+                    container.innerHTML = links.map(link => {
+                        const iconClass = link.icon || 'ph ph-link'; 
+                        
+                        return `
+                            <a href="${link.url}" target="_blank" class="flex items-center gap-3 bg-red-50 p-4 rounded-lg hover:bg-red-100 transition">
+                                 <i class="${iconClass} text-3xl" style="color: var(--primary-color);"></i>
+                                <div>
+                                    <p class="font-semibold" style="color: var(--primary-color-hover);">${link.title || 'Support Link'}</p>
+                                    <p class="text-sm truncate" style="color: var(--primary-color);">${link.url || 'N/A'}</p>
+                                </div>
+                            </a>
+                        `;
+                    }).join('');
+
+                } catch (error) {
+                    console.error("Error fetching support links:", error);
+                    container.innerHTML = '<p class="text-center text-red-500">Could not load support links.</p>';
+                }
+            };
+
+
+        // ---------------------------------------------------------------------
+        // TASK SYSTEM (MODIFIED FOR ONE-TIME COMPLETION)
+        // ---------------------------------------------------------------------
+        const setupTaskPage = async () => {
+            if (!userData) return;
+            const noPlanDiv = document.getElementById('task-page-no-plan');
+            const activeDiv = document.getElementById('task-page-active');
+            if(!noPlanDiv || !activeDiv) return;
+
+            if (!userData.activePlan) {
+                noPlanDiv.style.display = 'flex';
+                activeDiv.style.display = 'none';
+            } else {
+                noPlanDiv.style.display = 'none';
+                activeDiv.style.display = 'flex';
+                
+                try {
+                    const planSnap = await getDoc(doc(db, "plans", userData.activePlan));
+                    if (!planSnap.exists()) throw new Error("Plan not found");
+                    const planData = planSnap.data();
+                    document.getElementById('tasks-remaining').textContent = userData.tasksCompletedToday || 0;
+                    document.getElementById('tasks-total').textContent = planData.dailyAds || 0;
+                    
+                    // Pass the user's completed tasks map for filtering
+                    listenForTasks(userData.activePlan, planData.dailyAds, userData.completedTasks || {});
+                } catch (error) {
+                    console.error("Task page setup error:", error);
+                    showModal("Plan Error", "Your active plan could not be found. Please contact support.");
+                    // Resetting plan to prevent continuous errors
+                    await updateDoc(doc(db, "users", currentUser.uid), { activePlan: null, activePlanName: null });
+                }
+            }
+        };
+
+        // MODIFIED: Added completedTasksMap to filter out completed tasks
+        const listenForTasks = (planId, dailyAdLimit, completedTasksMap) => {
+            if (unsubscribeTasks) unsubscribeTasks();
+            
+            const tasksQuery = query(
+                 collection(db, "tasks"),
+                 where("active", "==", true)
+            );
+            
+            unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
+                const taskList = document.getElementById('task-list');
+                if (!taskList) return;
+
+                const tasksDone = userData.tasksCompletedToday || 0;
+                const allDailyTasksCompleted = tasksDone >= dailyAdLimit;
+
+                const relevantTasks = snapshot.docs.filter(doc => {
+                    const task = doc.data();
+                    const taskId = doc.id;
+                    const taskPlanId = task.assignedPlanId;
+                    
+                    // 1. Check plan assignment
+                    const isAssigned = taskPlanId === "all" || taskPlanId === planId;
+
+                    // 2. NEW CHECK: Filter out if task ID is in the user's completedTasks map
+                    // This is checked against the user's completedTasks map, which is reset daily.
+                    const isCompleted = !!completedTasksMap[taskId]; 
+                    
+                    return isAssigned && !isCompleted;
+                });
+                
+                const buttonDisabledClass = allDailyTasksCompleted ? 'disabled' : '';
+                const buttonText = allDailyTasksCompleted ? 'Limit Reached' : 'Start';
+
+                if (relevantTasks.length === 0 && allDailyTasksCompleted) {
+                    taskList.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="ph ph-check-circle text-4xl text-green-500 mb-2"></i><p>All daily tasks completed! Check back tomorrow.</p></div>`;
+                    return;
+                }
+                
+                if (relevantTasks.length === 0 && !allDailyTasksCompleted) {
+                    taskList.innerHTML = `<div class="text-center text-gray-500 py-10"><i class="ph ph-list-dashes text-4xl text-gray-400 mb-2"></i><p>No new unique tasks available today.</p></div>`;
+                    return;
+                }
+
+
+                taskList.innerHTML = relevantTasks.map(doc => {
+                    const task = doc.data();
+                    const iconMap = { youtube: 'ph-youtube-logo', telegram: 'ph-telegram-logo', video: 'ph-video', website: 'ph-globe' };
+                    
+                    return `
+                        <div class="task-card bg-white p-4 rounded-lg shadow-lg border" id="task-${doc.id}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-red-50 rounded-full">
+                                        <i class="ph-fill ${iconMap[task.type] || 'ph-question'} text-2xl" style="color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold">${task.title}</p>
+                                        <p class="text-sm font-bold text-green-600">${formatCurrency(task.reward)}</p>
+                                    </div>
+                                </div>
+                                <button class="start-task-btn text-white text-sm font-semibold px-4 py-2 rounded-md transition ${buttonDisabledClass}" 
+                                    style="background-color: var(--primary-color); color: white;"
+                                    data-task-id="${doc.id}" data-link="${task.link}" data-reward="${task.reward}" data-title="${task.title}" data-timer="${task.timerDuration || appSettings.taskTimer}"
+                                    ${buttonDisabledClass ? 'disabled' : ''}>
+                                     ${buttonText}
+                                </button>
+                            </div>
+                            <div class="task-timer-section mt-3 text-center hidden">
+                                <p class="text-sm text-gray-500">Task in progress... Do not close the window.</p>
+                                <div class="text-3xl font-bold my-2" id="timer-${doc.id}">00:00</div>
+                                <div class="progress-bar-container my-3"><div class="progress-bar" id="progress-${doc.id}"></div></div>
+                                <button class="claim-reward-btn btn-primary w-full" data-task-id="${doc.id}" data-reward="${task.reward}" data-title="${task.title}" disabled>Claim Reward</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            });
+        };
+
+        const startTask = (button) => {
+            if (button.disabled) return;
+            
+            const tasksTotal = parseInt(document.getElementById('tasks-total')?.textContent || '0', 10);
+            if((userData.tasksCompletedToday || 0) >= tasksTotal){
+                showModal("Limit Reached", "You have completed all your tasks for today.");
+                return;
+            }
+
+            const taskId = button.dataset.taskId;
+            const timerDuration = parseInt(button.dataset.timer, 10);
+            const card = document.getElementById(`task-${taskId}`);
+            
+            if (activeTimers[taskId]) clearInterval(activeTimers[taskId]);
+
+            // Disable all task buttons while one is active
+            document.querySelectorAll('.start-task-btn').forEach(btn => btn.disabled = true);
+            
+            // UI elements
+            const timerSection = card.querySelector('.task-timer-section');
+            const timerDisplay = card.querySelector(`#timer-${taskId}`);
+            const progressBar = card.querySelector(`#progress-${taskId}`);
+            const claimBtn = card.querySelector('.claim-reward-btn');
+
+            button.style.display = 'none';
+            timerSection.style.display = 'block';
+            window.open(button.dataset.link, '_blank');
+
+            let timeLeft = timerDuration;
+            claimBtn.disabled = true;
+
+            activeTimers[taskId] = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+                progressBar.style.width = `${(1 - (timeLeft / timerDuration)) * 100}%`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(activeTimers[taskId]);
+                    timerDisplay.textContent = "Time's up! Claim your reward.";
+                    claimBtn.disabled = false;
+                    
+                    // Re-enable other start buttons only if they are not completed
+                    document.querySelectorAll('.start-task-btn').forEach(btn => {
+                        if (!btn.disabled && btn.dataset.taskId !== taskId) {
+                             btn.disabled = false;
+                        }
+                    });
+                }
+            }, 1000);
+        };
+        
+        // MODIFIED: Adds task ID to user's completedTasks map
+        const claimReward = async (button) => {
+            if (button.disabled) return;
+            showLoader();
+            button.disabled = true;
+
+            const { taskId, reward, title } = button.dataset;
+            const rewardAmount = parseFloat(reward);
+            
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                const batch = writeBatch(db);
+                
+                // 1. Update user data
+                const newCompletedTasks = { 
+                    ...(userData.completedTasks || {}), 
+                    [taskId]: serverTimestamp() // NEW: Mark the specific task as completed
+                };
+
+                batch.update(userRef, {
+                    tasksCompletedToday: (userData.tasksCompletedToday || 0) + 1,
+                    balance: (userData.balance || 0) + rewardAmount,
+                    adIncome: (userData.adIncome || 0) + rewardAmount,
+                    completedTasks: newCompletedTasks // NEW: Record task completion
+                });
+
+                // 2. Add transaction record
+                const transactionsRef = collection(db, "transactions");
+                batch.set(doc(transactionsRef), {
+                    userId: currentUser.uid, type: 'ad_income', amount: rewardAmount,
+                    details: `Income from: ${title}`, status: 'approved', timestamp: serverTimestamp()
+                });
+                
+                await batch.commit();
+
+                // 3. UI Update: Remove the task card immediately
+                document.getElementById(`task-${taskId}`)?.remove(); 
+                
+                // 4. Re-enable all *other* task start buttons
+                document.querySelectorAll('.start-task-btn').forEach(btn => {
+                     // Only re-enable if it's not the claimed task and limit is not reached
+                     if (!btn.disabled && btn.dataset.taskId !== taskId) {
+                          btn.disabled = false;
+                     }
+                });
+
+
+                showModal("Success", `Reward of ${formatCurrency(rewardAmount)} claimed!`);
+            } catch (error) {
+                console.error("Reward claim error:", error);
+                showModal("Error", "Could not claim reward. Please try again.");
+                button.disabled = false; // Re-enable on error
+                // Also re-enable all other buttons on error
+                document.querySelectorAll('.start-task-btn').forEach(btn => {
+                    if (btn.dataset.taskId !== taskId) { btn.disabled = false; }
+                });
+            } finally {
+                hideLoader();
+            }
+        };
+
+        const updateDashboardMetrics = async () => {
+            if (!currentUser || !document.getElementById('today-income')) return;
+            // Use user data for ad and refer income (fetched by listener)
+            document.getElementById('ad-income').textContent = (userData?.adIncome || 0).toFixed(2);
+            document.getElementById('refer-income-dash').textContent = (userData?.referIncome || 0).toFixed(2);
+
+            // Calculate today/yesterday income from transactions (Requires DB read)
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const yesterdayStart = new Date(todayStart);
+            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+            
+            const transQuery = query(
+                 collection(db, "transactions"), 
+                 where("userId", "==", currentUser.uid), 
+                 where("type", "==", "ad_income"), 
+                 where("timestamp", ">=", yesterdayStart) // Get all from yesterday onwards
+            );
+            
+            try {
+                const transSnap = await getDocs(transQuery);
+                let todayIncome = 0;
+                let yesterdayIncome = 0;
+
+                transSnap.docs.forEach(doc => {
+                    const t = doc.data();
+                    const transDate = t.timestamp.toDate();
+                    
+                    if (transDate >= todayStart) {
+                        todayIncome += (t.amount || 0);
+                    } else if (transDate >= yesterdayStart) {
+                        yesterdayIncome += (t.amount || 0);
+                    }
+                });
+                
+                document.getElementById('today-income').textContent = todayIncome.toFixed(2);
+                document.getElementById('yesterday-income').textContent = yesterdayIncome.toFixed(2);
+            } catch (error) {
+                console.error("Error updating dashboard metrics:", error);
+            }
+        };
+
+        // ---------------------------------------------------------------------
+        // EVENT LISTENERS & HANDLERS
+        // ---------------------------------------------------------------------
+        document.getElementById('go-to-register').addEventListener('click', (e) => { e.preventDefault(); navigateTo('register-page'); });
+        document.getElementById('go-to-login').addEventListener('click', (e) => { e.preventDefault(); navigateTo('login-page'); });
+        document.getElementById('back-btn').addEventListener('click', () => navigateTo('home-page'));
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const pageId = item.dataset.page;
+                const title = item.querySelector('span')?.textContent || 'Page';
+                if (pageId === 'home-page') navigateTo('home-page');
+                else if (pageId) navigateTo(pageId, true, title);
+            });
+        });
+
+        // Delegate click events on the subpage container
+        subpageContainer.addEventListener('click', (e) => {
+            const target = e.target;
+            const gridItem = target.closest('.grid-item');
+            
+            if (target.matches('.start-task-btn')) startTask(target);
+            if (target.matches('.claim-reward-btn')) claimReward(target);
+            if (target.matches('.buy-plan-btn')) handlePlanPurchase(target);
+            
+            if (target.closest('#go-to-refer-btn')) { e.preventDefault(); navigateTo('refer-page', true, 'Refer Friends'); }
+            if (target.closest('#go-to-history-btn-dash')) { e.preventDefault(); navigateTo('history-page', true, 'Transaction History'); }
+            
+            if (gridItem && gridItem.dataset.page) { e.preventDefault(); navigateTo(gridItem.dataset.page, true, gridItem.querySelector('span')?.textContent); }
+            
+            // --- FIX FOR LOGOUT BUTTON ---
+            if (target.matches('#logout-btn')) {
+                // Remove any extra buttons from a previous modal
+                modalElement.querySelector('.modal-extra-btn')?.remove();
+
+                showModal('Confirm Logout', 'Are you sure you want to log out?');
+                
+                const closeBtn = modalElement.querySelector('#modalCloseBtn');
+                closeBtn.textContent = 'Cancel';
+                
+                // 1. Create the new Logout button
+                const logoutConfirmBtn = document.createElement('button');
+                logoutConfirmBtn.className = 'btn-primary w-full mt-3 modal-extra-btn'; // Added a class to find it later
+                logoutConfirmBtn.textContent = 'Log Out';
+                
+                // 2. Add it to the modal
+                closeBtn.parentNode.appendChild(logoutConfirmBtn);
+
+                // 3. Handle clicks
+                const originalCloseHandler = closeBtn.onclick;
+                
+                logoutConfirmBtn.onclick = () => {
+                    signOut(auth);
+                    hideModal();
+                };
+
+                closeBtn.onclick = () => {
+                    hideModal();
+                    // Restore the original close button behavior for next time
+                    closeBtn.textContent = 'OK';
+                    closeBtn.onclick = originalCloseHandler;
+                    logoutConfirmBtn.remove();
+                };
+            }
+            // --- END OF FIX ---
+            
+            if(target.matches('#copy-refer-code-btn')) {
+                const code = document.getElementById('refer-code-display')?.textContent;
+                if(code) {
+                     // Using navigator.clipboard.writeText is the standard and preferred method
+                     navigator.clipboard.writeText(code).then(() => showModal('Copied!', `Code "${code}" copied.`), (err) => {
+                        // Fallback in case of permissions error, though browser support for writeText is high
+                        console.error('Could not copy text: ', err);
+                        showModal('Error', 'Could not copy automatically. Try manually selecting the code.');
+                     });
+                }
+            }
+            if (target.matches('.preset-amount-btn')) {
+                const amountInput = document.getElementById('deposit-amount');
+                if(amountInput) amountInput.value = target.dataset.amount;
+            }
+            if (target.matches('#copy-number-btn')) {
+                const number = document.getElementById('deposit-to-number')?.textContent;
+                if(number) {
+                     navigator.clipboard.writeText(number).then(() => showModal('Copied!', 'Number copied.'));
+                }
+            }
+            if(target.matches('#go-to-plans-btn')) navigateTo('plans-page', true, 'Available Plans');
+        });
+
+        // Delegate submit events on the subpage container
+        subpageContainer.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if(e.target.id === 'deposit-form-step1') handleDepositStep1(e);
+            if(e.target.id === 'deposit-form-step2') handleDepositStep2(e);
+            if(e.target.id === 'withdraw-form') handleWithdraw(e);
+        });
+
+        allPages.home.addEventListener('click', (e) => {
+             const gridItem = e.target.closest('.grid-item');
+             if (gridItem) {
+                 e.preventDefault();
+                 navigateTo(gridItem.dataset.page, true, gridItem.querySelector('span')?.textContent);
+             }
+        });
+        
+        // --- FORM & ACTION HANDLERS ---
+        async function handlePlanPurchase(button) {
+            if (!userData || !currentUser) return;
+            // MODIFIED: Use the final discounted price
+            const { planId, planName, planPrice, planFinalPrice, planValidity, isDiscounted } = button.dataset;
+            const originalPrice = parseFloat(planPrice);
+            const finalPrice = parseFloat(planFinalPrice);
+            
+            if (userData.activePlan) { showModal('Plan Active', 'You already have an active plan.'); return; }
+            if ((userData.balance || 0) < finalPrice) { showModal('Insufficient Balance', `Need ${formatCurrency(finalPrice)}. Please deposit first.`); return; }
+            
+            showLoader();
+            try {
+                const batch = writeBatch(db);
+                
+                batch.update(doc(db, "users", currentUser.uid), {
+                    balance: (userData.balance || 0) - finalPrice,
+                    activePlan: planId, activePlanName: planName,
+                    planActivationDate: serverTimestamp(), planValidity: parseInt(planValidity),
+                    tasksCompletedToday: 0, lastTaskReset: serverTimestamp(),
+                    referredBy: null // NEW: Clear referrer after first discounted purchase
+                });
+                
+                // 1. Transaction for Plan Purchase (the final amount paid)
+                batch.set(doc(collection(db, "transactions")), {
+                    userId: currentUser.uid, type: 'plan_purchase', amount: finalPrice,
+                    details: `Purchased ${planName}`, status: 'approved', timestamp: serverTimestamp()
+                });
+                
+                // 2. Transaction for Referral Discount (if applied)
+                if (isDiscounted === 'true' && finalPrice < originalPrice) {
+                    const discountAmount = originalPrice - finalPrice;
+                    batch.set(doc(collection(db, "transactions")), {
+                         userId: currentUser.uid, type: 'referral_discount', amount: discountAmount,
+                         details: `Referral discount from referrer: ${userData.referredBy}`, status: 'approved', timestamp: serverTimestamp()
+                    });
+                }
+                
+                await batch.commit();
+                showModal('Success!', `Activated ${planName}.`);
+                navigateTo('task-page', true, 'Task');
+            } catch (error) {
+                console.error("Plan purchase error:", error);
+                showModal('Purchase Failed', 'Could not activate plan.');
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        function handleDepositStep1(e) {
+            const amount = parseFloat(e.target.querySelector('#deposit-amount').value);
+            
+            // --- UPDATED VALIDATION ---
+            if (isNaN(amount) || amount < appSettings.minDeposit) { 
+                showModal('Invalid Amount', `Minimum deposit is ${formatCurrency(appSettings.minDeposit)}.`); 
+                return; 
+            }
+            if (appSettings.maxDeposit > 0 && amount > appSettings.maxDeposit) {
+                showModal('Invalid Amount', `Maximum deposit is ${formatCurrency(appSettings.maxDeposit)}.`); 
+                return; 
+            }
+            // --- END UPDATE ---
+            
+            const method = e.target.querySelector('input[name="paymentMethod"]:checked').value;
+            depositData = { amount, method };
+
+            if (!appSettings.paymentSettings) {
+                showModal('Error', 'Payment settings are not configured. Please contact admin.');
+                return;
+            }
+
+            const paymentNumber = (method === 'Bkash') ? appSettings.paymentSettings.bkash : appSettings.paymentSettings.nagad;
+
+            if (!paymentNumber) {
+                showModal('Error', `${method} payment is not available. Please contact admin.`);
+                return;
+            }
+            
+            navigateTo('deposit-details-page', true, 'Deposit Details');
+            
+            setTimeout(() => {
+                document.getElementById('deposit-method-logo').src = depositData.method === 'Bkash' ? 'https://i.ibb.co/B2HwWPWw/download.png' : 'https://i.ibb.co/xq9fXfLN/images.png';
+                document.getElementById('deposit-to-number').textContent = paymentNumber;
+                document.getElementById('deposit-instruct-amount').textContent = formatCurrency(amount);
+            }, 50);
+        }
+
+        async function handleDepositStep2(e) {
+            // Logic is sound, no change needed here.
+            showLoader();
+            const senderNumber = e.target.querySelector('#sender-number').value.trim();
+            const transactionId = e.target.querySelector('#transaction-id').value.trim();
+            if (!senderNumber || !transactionId) { hideLoader(); showModal('Missing Info', 'Enter Sender Number & TrxID.'); return; }
+            
+            try {
+                await addDoc(collection(db, "transactions"), {
+                    userId: currentUser.uid, type: 'deposit', status: 'pending', ...depositData,
+                    senderNumber, transactionId, timestamp: serverTimestamp()
+                });
+                showModal('Submitted', 'Deposit request pending. Check History.');
+                depositData = {};
+                navigateTo('history-page', true, 'History');
+            } catch (error) { showModal('Submission Failed', 'Try again.');
+            } finally { hideLoader(); }
+        }
+
+        async function handleWithdraw(e) {
+            const amount = parseFloat(e.target.querySelector('#withdraw-amount').value);
+            const number = e.target.querySelector('#withdraw-number').value.trim();
+            if (!number) { showModal('Missing Info', 'Please enter your receiving number.'); return; }
+
+            // --- UPDATED VALIDATION ---
+            if (isNaN(amount) || amount < appSettings.minWithdraw) { 
+                showModal('Invalid Amount', `Minimum withdraw is ${formatCurrency(appSettings.minWithdraw)}.`); 
+                return; 
+            }
+            if (appSettings.maxWithdraw > 0 && amount > appSettings.maxWithdraw) {
+                showModal('Invalid Amount', `Maximum withdraw is ${formatCurrency(appSettings.maxWithdraw)}.`); 
+                return; 
+            }
+            // --- END UPDATE ---
+
+            if (amount > (userData?.balance || 0)) { showModal('Insufficient Balance', `Cannot withdraw more than ${formatCurrency(userData.balance)}.`); return; }
+            
+            showLoader();
+            try {
+                const batch = writeBatch(db);
+                
+                const userRef = doc(db, "users", currentUser.uid);
+                batch.update(userRef, {
+                    balance: (userData.balance || 0) - amount
+                });
+                
+                const transRef = doc(collection(db, "transactions"));
+                batch.set(transRef, {
+                    userId: currentUser.uid, type: 'withdraw', status: 'pending', amount, 
+                    method: e.target.querySelector('input[name="withdrawMethod"]:checked').value,
+                    receiverNumber: number, 
+                    timestamp: serverTimestamp()
+                });
+
+                await batch.commit();
+                
+                showModal('Submitted', 'Withdrawal request pending. Your balance has been updated.');
+                navigateTo('history-page', true, 'History');
+            } catch (error) { 
+                console.error("Withdraw error:", error);
+                showModal('Submission Failed', 'An error occurred. Please try again.');
+            } finally { 
+                hideLoader(); 
+            }
+        }
+        
+        // ---------------------------------------------------------------------
+        // INITIALIZATION
+        // ---------------------------------------------------------------------
+        const init = () => {
+             // Start slider rendering on init (it will use default content until firebase data arrives)
+             renderSlider(); 
+        };
+        init();
+
+    </script>
+</body>
+</html>
